@@ -86,17 +86,46 @@ export const createCourse = async (req, res, next)=>{
 export const updateCourse = async (req, res, next)=>{
     try{
         const { id } = req.params;
-        const course = await Course.findByIdAndUpdate(
-            id, { $set: req.body }, { runValidators: true }
-        )
+        const course = await Course.findByIdAndUpdate(id);
         if(!course){
             return next(new AppError("course doesn't exists", 400));
         }
 
+        // If a new thumbnail is uploaded
+        if(req.file){
+            if(course.thumbnail.public_id){
+                await cloudinary.v2.uploader.destroy(course.thumbnail.public_id);
+            }
+
+            const result = await cloudinary.v2.uploader(req.file.path, {
+                folder: 'lms-platform',
+                width: 300,
+                height: 300,
+                crop: 'fill',
+                gravity: 'center',
+            })
+
+            course.thumbnail.public_id = result.public_id;
+            course.thumbnail.secure_URL = result.secure_url;
+
+            await fs.rm('uploads/' + req.file.filename);
+        }
+
+        const updatedCourse = await Course.findByIdAndUpdate(
+            id, 
+            { $set: req.body }, 
+            { runValidators: true, new: true }
+        );
+        
+        if (!updatedCourse) {
+            return next(new AppError("Course update failed", 400));
+        }
+
+
         res.status(200).json({
             success: true,
             message: "course updated successfully",
-            course
+            course: updatedCourse,
         })
     }catch(err){
         return next(new AppError(err.message, 500));
@@ -144,7 +173,7 @@ export const addLectureToCourseById = async (req, res, next)=>{
 
         if(req.file){
             try{
-                const result = cloudinary.v2.uploader(req.file.path, {
+                const result = await cloudinary.v2.uploader(req.file.path, {
                     folder: 'lms-platform',
                     height: 300,
                     width: 300,
@@ -155,7 +184,7 @@ export const addLectureToCourseById = async (req, res, next)=>{
                 lectureData.lecture.public_id = result.public_id;
                 lectureData.lecture.secure_URL = result.secure_url;
 
-                fs.rm('uploads/' + req.file.filename);
+                await fs.rm('uploads/' + req.file.filename);
 
             }catch(err){
                 return next(new AppError(err || "file is not uploaded, please try again later", 500));
@@ -201,6 +230,8 @@ export const deleteCourseLecture = async (req, res, next)=> {
         const deletedLecture = course.lectures.splice(lectureIndex, 1)[0];
         course.numberOfLectures = course.lectures.length;
 
+        const result = await cloudinary.v2.uploader.destroy(deletedLecture.lecture.public_id);
+
         await course.save();
 
         res.status(200).json({
@@ -214,5 +245,55 @@ export const deleteCourseLecture = async (req, res, next)=> {
     }
 }
 
+export const updateCourseLecture = async (req, res, next)=> {
+    try{
+        const { id } = req.params;
+        const course = await Course.findById(id);
+        const { lectureId, title, description } = req.body;
 
+        if (!title && !description) {
+            return next(new AppError("Please provide at least one field (title or description) to update.", 400));
+        }
+
+        const lectureIndex = course.lectures.findIndex(lecture => lecture.lecture.public_id === lectureId);
+
+        if(lectureIndex === -1){
+            return next(new AppError("Lecture doesn't exists", 400))
+        }
+
+        if (title) course.lectures[lectureIndex].title = title;
+
+        if (description) course.lectures[lectureIndex].description = description;
+
+        // Check if there's a new file uploaded
+        if(req.file){
+            const oldPublicId = course.lectures[lectureIndex].lecture.public_id;
+
+            await cloudinary.v2.uploader.destroy(oldPublicId);
+
+            const result = await cloudinary.v2.uploader(req.file.path, {
+                folder: 'lms-platform',
+                resource_type: 'video',
+                height: 300,
+                width: 300,
+                crop: 'fill',
+                gravity: 'center',
+            })
+
+            await fs.rm('uploads/' + req.file.filename);
+        }
+
+        await course.save();
+
+        res.status(200).json({
+            success: true,
+            message: "lecture details updated successfully",
+            updatedLecture: course.lectures[lectureIndex],
+        })
+
+
+    }catch(err){
+        return next(new AppError(err.message, 500));
+    }
+}
 
