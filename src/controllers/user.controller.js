@@ -1,8 +1,8 @@
-import AppError from '../utils/error.util.js'
-import User from '../models/User.js'
+import AppError from '../utils/error.util.js';
+import User from '../models/User.js';
+import sendEmail from '../utils/sendEmail.util.js';
 import cloudinary from 'cloudinary';
 import fs from 'fs/promises';
-import sendEmail from '../utils/sendEmail.util.js';
 import crypto from 'crypto';
 
 const cookieOptions = {
@@ -37,7 +37,7 @@ export const register = async (req, res, next)=>{
             return next(new AppError("user registration is failed, please try again", 400))
         }
 
-        console.log("File Details: " + JSON.stringify(req.file));
+        // console.log("File Details: " + JSON.stringify(req.file));
         if(req.file){
             try{
                 const result = await cloudinary.v2.uploader.upload(req.file.path, { 

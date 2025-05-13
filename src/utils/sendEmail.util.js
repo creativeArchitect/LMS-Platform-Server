@@ -1,6 +1,4 @@
 import nodemailer from 'nodemailer';
-import AppError from './error.util';
-
 
 //  async-await is not allowed in global scope, must use a wrapper.
 const sendEmail = async (email, subject, body)=>{

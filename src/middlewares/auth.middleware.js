@@ -1,4 +1,3 @@
-import AppError from "../utils/error.util.js";
 import jwt from 'jsonwebtoken';
 
 
@@ -16,7 +15,14 @@ export const isLoggedIn = async (req, res, next)=>{
     next();
 }
 
+export const authorizedRoles = (...roles) => async (req, res, next)=>{
+    const currentUserRole = req.body?.role;
+    if(!roles.includes(currentUserRole)){
+        return next(new AppError("You don't have permission to access this route", 403))
+    }
 
+    next();
+}
 
 
 
