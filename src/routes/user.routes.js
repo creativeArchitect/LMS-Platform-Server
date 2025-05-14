@@ -18,13 +18,3 @@ userRoutes.put('/update', isLoggedIn, upload.single('avatar'), updateProfile);
 
 
 export default userRoutes;
-
-
-
-
-
-
-
-
-
-

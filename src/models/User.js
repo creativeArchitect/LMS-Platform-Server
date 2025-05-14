@@ -3,6 +3,8 @@ import validator from "validator";
 import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { deepEqual } from "assert";
+import { type } from "os";
 
 
 const userSchema = new mongoose.Schema({
@@ -61,7 +63,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['user', 'admin'],
         default: 'user'
-    }
+    },
+    subscription: {
+        id: String,
+        status: String,
+    },
 }, { timestamps: true }
 )
 

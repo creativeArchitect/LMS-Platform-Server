@@ -66,7 +66,7 @@ const courseSchema = mongoose.Schema({
         type: String,
         trim: true,
         required: [true, 'creator name is required']
-    }
+    },
 }, { timestamps: true } 
 )
 

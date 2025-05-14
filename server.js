@@ -1,12 +1,18 @@
 import app from "./src/app.js";
 import connectDB from "./src/config/dbConnection.js";
-import { v2 } from "cloudinary";
+import cloudinary from "cloudinary";
+import Razorpay from "razorpay";
 
 // cloudinary configuration
-v2.config({
+cloudinary.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
+})
+
+export const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_SECRET,
 })
 
 
@@ -17,31 +23,5 @@ await connectDB().then(()=>{
 }).catch((err) =>{
     console.log("Database cannot be connected!!");
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
